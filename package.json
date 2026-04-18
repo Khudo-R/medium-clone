@@ -1,0 +1,33 @@
+{
+  "name": "medium-clone",
+  "version": "0.0.1",
+  "type": "commonjs",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node dist/server.js",
+    "build": "tsc -p .",
+    "dev": "nodemon src/server.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Khudo-R/medium-clone.git"
+  },
+  "author": "Khudo #R",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Khudo-R/medium-clone/issues"
+  },
+  "homepage": "https://github.com/Khudo-R/medium-clone#readme",
+  "dependencies": {
+    "express": "^5.2.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.6.0",
+    "nodemon": "^3.1.14",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
+  }
+}
