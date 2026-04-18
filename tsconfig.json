@@ -1,12 +1,22 @@
 {
   "compilerOptions": {
-    "module": "commonjs",                                
+    "target": "ES2022",
+    "module": "CommonJS",
     "rootDir": "./src",
-    "outDir": "./dist",  
-    "moduleResolution": "bundler", 
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
+    "types": ["node"],
+    "paths": {
+      "@modules/*": ["src/modules/*"],
+      "@config/*": ["src/config/*"],
+      "@utils/*": ["src/utils/*"],
+      "@middleware/*": ["src/middleware/*"]
+    }
   },
+  "include": ["src/**/*", "prisma/**/*"]
 }
