@@ -24,7 +24,7 @@ export const validateResource = (schema: z.ZodObject<any>) => {
         }));
 
         res.status(400).json({
-          error: 'Ошибка валидации данных',
+          error: 'Validation failed',
           details: formattedErrors,
         });
         return;
@@ -32,7 +32,7 @@ export const validateResource = (schema: z.ZodObject<any>) => {
 
       res
         .status(500)
-        .json({ error: 'Внутренняя ошибка сервера при валидации' });
+        .json({ error: 'Internal server error during validation' });
       return;
     }
   };
