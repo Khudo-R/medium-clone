@@ -4,8 +4,17 @@ import { prisma } from '@config/db';
 import { CreateArticleInput, UpdateArticleInput } from './article.schema';
 import { catchErrorTyped } from '@utils/save-promise';
 import { ForbiddenError } from './article.error';
+import { DatabaseError } from '@utils/database.error';
 import { UserRole } from '@modules/user/user.schema';
 import { logger } from '@utils/logger';
+
+const formatArticle = (article: any) => {
+  const { tags, ...rest } = article;
+  return {
+    ...rest,
+    tags: tags ? tags.map((t: any) => t.name) : [],
+  };
+};
 
 const generateUniqueSlug = async (title: string): Promise<string> => {
   const baseSlug = slugify(title, { lower: true, strict: true, trim: true });
@@ -15,7 +24,7 @@ const generateUniqueSlug = async (title: string): Promise<string> => {
     prisma.article.findUnique({ where: { slug } }),
   );
   if (prismError) {
-    throw new Error('Database error');
+    throw new DatabaseError();
   }
 
   if (existingArticle) {
@@ -29,9 +38,9 @@ export const createArticle = async (
   authorId: string,
   data: CreateArticleInput,
 ) => {
-  const { tagList, ...articleData } = data;
+  const { tags, ...articleData } = data;
   const slug = await generateUniqueSlug(data.title);
-  const tagsQuery = (tagList ?? []).map((name) => ({
+  const tagsQuery = (tags ?? []).map((name) => ({
     where: { name },
     create: { name },
   }));
@@ -55,9 +64,9 @@ export const createArticle = async (
 
   if (prismError) {
     logger.error(prismError, 'Error creating article:');
-    throw new Error('Database error');
+    throw new DatabaseError();
   }
-  return newArticle;
+  return formatArticle(newArticle);
 };
 
 export const getArticleBySlug = async (slug: string) => {
@@ -72,13 +81,13 @@ export const getArticleBySlug = async (slug: string) => {
   );
 
   if (prismError) {
-    throw new Error('Database error');
+    throw new DatabaseError();
   }
   if (!article) {
     throw new Error('Article not found');
   }
 
-  return article;
+  return formatArticle(article);
 };
 
 export const updateArticle = async (
@@ -95,7 +104,7 @@ export const updateArticle = async (
   );
 
   if (prismError) {
-    throw new Error('Database error');
+    throw new DatabaseError();
   }
   if (!article) {
     throw new Error('Article not found');
@@ -110,11 +119,11 @@ export const updateArticle = async (
     );
   }
 
-  const { tagList, ...updateData } = data;
-  const tagsQuery = tagList
+  const { tags, ...updateData } = data;
+  const tagsQuery = tags
     ? {
         set: [],
-        connectOrCreate: tagList.map((name) => ({
+        connectOrCreate: tags.map((name) => ({
           where: { name },
           create: { name },
         })),
@@ -133,8 +142,47 @@ export const updateArticle = async (
   );
 
   if (prismUpdateError) {
-    throw new Error('Database error');
+    throw new DatabaseError();
   }
 
-  return updatedArticle;
+  return formatArticle(updatedArticle);
+};
+
+export const deleteArticle = async (
+  articleId: string,
+  userId: string,
+  userRoles: UserRole[],
+) => {
+  const [prismGetError, article] = await catchErrorTyped(
+    prisma.article.findUnique({
+      where: { id: articleId },
+      include: { author: true },
+    }),
+  );
+
+  if (prismGetError) {
+    throw new DatabaseError();
+  }
+
+  if (!article) {
+    throw new Error('Article not found');
+  }
+
+  const isAuthor = article.authorId === userId;
+  const isAdmin = userRoles.includes('ADMIN');
+  if (!isAuthor && !isAdmin) {
+    throw new ForbiddenError(
+      'You do not have permission to delete this article',
+    );
+  }
+
+  const [prismError, deletedArticle] = await catchErrorTyped(
+    prisma.article.delete({ where: { id: articleId } }),
+  );
+
+  if (prismError) {
+    throw new DatabaseError();
+  }
+
+  return deletedArticle;
 };

@@ -1,11 +1,17 @@
-import e, { Router } from 'express';
-import { createArticle, update } from './article.controller';
+import { Router } from 'express';
+import {
+  createArticle,
+  update,
+  deleteArticle,
+  getArticle,
+} from './article.controller';
 import { authMiddleware } from '@middleware/auth.middleware';
 import { validateResource } from '@middleware/validate.middleware';
 import { createArticleSchema, updateArticleSchema } from './article.schema';
 
 const router = Router();
 
+router.get('/:slug', getArticle);
 router.post(
   '/',
   authMiddleware,
@@ -18,5 +24,6 @@ router.patch(
   validateResource(updateArticleSchema),
   update,
 );
+router.delete('/:id', authMiddleware, deleteArticle);
 
 export default router;

@@ -5,6 +5,7 @@ import { prisma } from '@config/db';
 import { env } from '@config/env';
 import { catchErrorTyped } from '@utils/save-promise';
 import { UserExistsError, InvalidCredentialsError } from './user.errors';
+import { DatabaseError } from '@utils/database.error';
 
 export const updateUserData = async (userId: string, data: UpdateUserInput) => {
   const [prismError, updatedUser] = await catchErrorTyped(
@@ -22,7 +23,7 @@ export const updateUserData = async (userId: string, data: UpdateUserInput) => {
     }),
   );
   if (prismError) {
-    throw new Error('Database error');
+    throw new DatabaseError();
   }
   return updatedUser;
 };
@@ -36,7 +37,7 @@ export const createUser = async (data: RegisterInput) => {
     }),
   );
   if (prismError) {
-    throw new Error('Database error');
+    throw new DatabaseError();
   }
   if (existingUser) {
     throw new UserExistsError(
@@ -63,7 +64,7 @@ export const createUser = async (data: RegisterInput) => {
     }),
   );
   if (createError) {
-    throw new Error('Database error');
+    throw new DatabaseError();
   }
   return newUser;
 };
@@ -76,7 +77,7 @@ export const loginUser = async (data: LoginInput) => {
   );
 
   if (prismError) {
-    throw new Error('Database error');
+    throw new DatabaseError();
   }
 
   if (!user) {
@@ -121,7 +122,7 @@ export const getCurrentLoggedInUser = async (userId: string) => {
     }),
   );
   if (prismError) {
-    throw new Error('Database error');
+    throw new DatabaseError();
   }
   return user;
 };
