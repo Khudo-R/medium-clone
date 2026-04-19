@@ -1,19 +1,69 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  USER
+  PREMIUM
+  ADMIN
+}
+
 model User {
-  id           String   @id @default(uuid()) 
-  email        String   @unique              
-  username     String   @unique              
-  passwordHash String                        
-  bio          String?                       
-  image        String?                       
-  
-  createdAt    DateTime @default(now())      
-  updatedAt    DateTime @updatedAt           
+  id           String    @id @default(uuid())
+  email        String    @unique
+  username     String    @unique
+  passwordHash String
+  bio          String?
+  image        String?
+  roles        Role[]    @default([USER])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  articles     Article[] @relation(name: "UserArticles")
+  favorites    Article[] @relation(name: "UserFavorites")
+  comments     Comment[]
+}
+
+model Article {
+  id          String    @id @default(uuid())
+  slug        String    @unique
+  title       String
+  description String
+  body        String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  author      User      @relation(name: "UserArticles", fields: [authorId], references: [id], onDelete: Cascade)
+  authorId    String
+
+  comments    Comment[]
+
+  tags        Tag[]
+
+  favoritedBy User[]    @relation(name: "UserFavorites")
+
+  @@index([slug])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  articleId String
+
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  String
+}
+
+model Tag {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  articles Article[]
 }

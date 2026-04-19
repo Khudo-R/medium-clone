@@ -1,11 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
+import { UserRole } from '@modules/user/user.schema';
 
 declare global {
   namespace Express {
     interface Request {
-      user?: { userId: string };
+      user?: {
+        userId: string;
+        roles: UserRole[];
+      };
     }
   }
 }
@@ -26,7 +30,10 @@ export const authMiddleware = (
   const [_, token] = authHeader.split(' ');
 
   try {
-    const decoded = jwt.verify(token, env.JWT_SECRET) as { userId: string };
+    const decoded = jwt.verify(token, env.JWT_SECRET) as {
+      userId: string;
+      roles: UserRole[];
+    };
 
     req.user = decoded;
 

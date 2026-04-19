@@ -1,10 +1,31 @@
-import { prisma } from '@config/db';
+import type { RegisterInput, LoginInput, UpdateUserInput } from './user.schema';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { prisma } from '@config/db';
 import { env } from '@config/env';
-import type { RegisterInput, LoginInput } from './user.schema';
 import { catchErrorTyped } from '@utils/save-promise';
 import { UserExistsError, InvalidCredentialsError } from './user.errors';
+
+export const updateUserData = async (userId: string, data: UpdateUserInput) => {
+  const [prismError, updatedUser] = await catchErrorTyped(
+    prisma.user.update({
+      where: { id: userId },
+      data: { ...data },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        bio: true,
+        image: true,
+        roles: true,
+      },
+    }),
+  );
+  if (prismError) {
+    throw new Error('Database error');
+  }
+  return updatedUser;
+};
 
 export const createUser = async (data: RegisterInput) => {
   const [prismError, existingUser] = await catchErrorTyped(
@@ -37,6 +58,7 @@ export const createUser = async (data: RegisterInput) => {
         email: true,
         bio: true,
         image: true,
+        roles: true,
       },
     }),
   );
@@ -70,12 +92,36 @@ export const loginUser = async (data: LoginInput) => {
     throw new InvalidCredentialsError();
   }
 
-  const token = jwt.sign({ userId: user.id }, env.JWT_SECRET, {
-    expiresIn: '7d',
-  });
+  const token = jwt.sign(
+    { userId: user.id, roles: user.roles },
+    env.JWT_SECRET,
+    {
+      expiresIn: '7d',
+    },
+  );
 
   return {
     ...user,
     token,
   };
+};
+
+export const getCurrentLoggedInUser = async (userId: string) => {
+  const [prismError, user] = await catchErrorTyped(
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        bio: true,
+        image: true,
+        roles: true,
+      },
+    }),
+  );
+  if (prismError) {
+    throw new Error('Database error');
+  }
+  return user;
 };

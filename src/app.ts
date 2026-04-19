@@ -1,8 +1,11 @@
 import type { Application, Request, Response } from 'express';
 import express from 'express';
 import cors from 'cors';
+import morgan from 'morgan';
 import dotenv from 'dotenv';
+import { env } from './config/env';
 import userRoutes from '@modules/user/user.routes';
+import articleRoutes from '@modules/article/article.routes';
 
 dotenv.config();
 
@@ -11,10 +14,17 @@ const app: Application = express();
 app.use(cors());
 app.use(express.json());
 
+if (env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+} else {
+  app.use(morgan('combined'));
+}
+
 app.get('/api/health-check', (req: Request, res: Response) => {
   res.status(200).json({ message: 'Server is healthy', status: 'success' });
 });
 
 app.use('/api/users', userRoutes);
+app.use('/api/articles', articleRoutes);
 
 export default app;

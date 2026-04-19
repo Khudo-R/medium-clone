@@ -1,7 +1,12 @@
 import { Request, Response } from 'express';
 import { ZodError } from 'zod';
-import { registerSchema, loginSchema } from './user.schema';
-import { createUser, loginUser } from './user.service';
+import { registerSchema, loginSchema, updateUserSchema } from './user.schema';
+import {
+  createUser,
+  loginUser,
+  updateUserData,
+  getCurrentLoggedInUser,
+} from './user.service';
 import { catchErrorTyped } from '@utils/save-promise';
 import { formatZodErrors } from '@utils/zod-error-formatter';
 import { UserExistsError } from './user.errors';
@@ -62,22 +67,50 @@ export const getCurrentUser = async (
   res: Response,
 ): Promise<void> => {
   const userId = req.user?.userId;
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      email: true,
-      username: true,
-      bio: true,
-      image: true,
-    },
-  });
-
+  if (!userId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+  const [err, user] = await catchErrorTyped(getCurrentLoggedInUser(userId));
+  if (err) {
+    res.status(500).json({ error: 'Database error' });
+    return;
+  }
   if (!user) {
     res.status(404).json({ error: 'User not found' });
     return;
   }
 
   res.status(200).json({ user });
+};
+
+export const updateCurrentUser = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const userId = req.user?.userId;
+  if (!userId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+  const [zodError, validateData] = await catchErrorTyped(
+    updateUserSchema.parseAsync(req),
+    [ZodError],
+  );
+
+  if (zodError) {
+    res.status(400).json({ errors: formatZodErrors(zodError) });
+    return;
+  }
+
+  const [updateError, updatedUser] = await catchErrorTyped(
+    updateUserData(userId, validateData.body),
+  );
+
+  if (updateError) {
+    res.status(500).json({ error: updateError.message });
+    return;
+  }
+
+  res.status(200).json({ user: updatedUser });
 };
