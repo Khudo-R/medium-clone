@@ -2,10 +2,10 @@ import { Request, Response, NextFunction } from 'express';
 import { logger } from '@utils/logger';
 
 export const errorHandler = (
-  err: any,
+  err: Error & { status?: number },
   req: Request,
   res: Response,
-  next: NextFunction,
+  _next: NextFunction,
 ): void => {
   logger.error(err.stack || err.message);
 

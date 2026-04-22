@@ -10,7 +10,6 @@ import {
 import { catchErrorTyped } from '@utils/save-promise';
 import { formatZodErrors } from '@utils/zod-error-formatter';
 import { UserExistsError } from './user.errors';
-import { prisma } from '@config/db';
 
 export const registerUser = async (
   req: Request,

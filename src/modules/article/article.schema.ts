@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { registry } from '@config/swagger';
 
 const articleBodySchema = z.object({
   title: z
@@ -46,3 +47,6 @@ export const updateArticleSchema = z.object({
 });
 
 export type UpdateArticleInput = z.infer<typeof updateArticleSchema>['body'];
+
+registry.register('CreateArticleInput', createArticleSchema.shape.body);
+registry.register('UpdateArticleInput', updateArticleSchema.shape.body);

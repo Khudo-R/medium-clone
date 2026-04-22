@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import { catchErrorTyped } from '@utils/save-promise';
-import { formatZodErrors } from '@utils/zod-error-formatter';
 import { ForbiddenError } from './article.error';
 import {
   createArticle as createArticleService,

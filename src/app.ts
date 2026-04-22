@@ -1,3 +1,4 @@
+import { generateOpenApiDocument } from './config/swagger';
 import type { Application } from 'express';
 import express from 'express';
 import cors from 'cors';
@@ -8,7 +9,6 @@ import { env } from './config/env';
 import userRoutes from '@modules/user/user.routes';
 import articleRoutes from '@modules/article/article.routes';
 import { errorHandler } from '@middleware/error.middleware';
-import { generateOpenApiDocument } from './config/swagger';
 
 dotenv.config();
 
@@ -28,7 +28,7 @@ app.use(
   swaggerUi.serve,
   swaggerUi.setup(generateOpenApiDocument()),
 );
-app.get('/api-docs.json', (req, res) => {
+app.get('/api-docs.json', (_, res) => {
   res.json(generateOpenApiDocument());
 });
 
