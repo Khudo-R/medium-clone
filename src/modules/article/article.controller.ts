@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
+import { ZodError } from 'zod';
 import { catchErrorTyped } from '@utils/save-promise';
-import { ForbiddenError } from './article.error';
+import { ForbiddenError, ArticleNotFoundError } from './article.errors';
 import {
   createArticle as createArticleService,
   updateArticle as updateArticleService,
@@ -8,6 +9,13 @@ import {
   getArticleBySlug,
 } from './article.service';
 import { DatabaseError } from '@utils/database.error';
+import { formatZodErrors } from '@utils/zod-error-formatter';
+import {
+  createArticleSchema,
+  updateArticleSchema,
+  articleSlugParamSchema,
+  articleIdParamSchema,
+} from './article.schema';
 
 export const createArticle = async (
   req: Request,
@@ -19,12 +27,23 @@ export const createArticle = async (
     return;
   }
 
+  const [zodError, validateData] = await catchErrorTyped(
+    createArticleSchema.parseAsync(req),
+    [ZodError],
+  );
+
+  if (zodError) {
+    res.status(400).json({ errors: formatZodErrors(zodError) });
+    return;
+  }
+
   const [createError, article] = await catchErrorTyped(
-    createArticleService(userId, req.body),
+    createArticleService(userId, validateData.body),
+    [DatabaseError],
   );
 
   if (createError) {
-    res.status(500).json({ error: createError });
+    res.status(500).json({ error: 'Failed to create article' });
     return;
   }
 
@@ -32,23 +51,51 @@ export const createArticle = async (
 };
 
 export const update = async (req: Request, res: Response): Promise<void> => {
+  const userId = req.user?.userId;
+  if (!userId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
+  const [zodParamError, validateParams] = await catchErrorTyped(
+    articleIdParamSchema.parseAsync(req.params),
+    [ZodError],
+  );
+
+  if (zodParamError) {
+    res.status(400).json({ errors: formatZodErrors(zodParamError) });
+    return;
+  }
+
+  const [zodError, validateData] = await catchErrorTyped(
+    updateArticleSchema.parseAsync(req),
+    [ZodError],
+  );
+
+  if (zodError) {
+    res.status(400).json({ errors: formatZodErrors(zodError) });
+    return;
+  }
+
   const [error, article] = await catchErrorTyped(
     updateArticleService(
-      String(req.params.id),
-      req.user!.userId,
+      validateParams.id,
+      userId,
       req.user!.roles,
-      req.body,
+      validateData.body,
     ),
+    [ForbiddenError, ArticleNotFoundError, DatabaseError],
   );
+
   if (error instanceof ForbiddenError) {
     res.status(403).json({ error: error.message });
     return;
   }
+  if (error instanceof ArticleNotFoundError) {
+    res.status(404).json({ error: error.message });
+    return;
+  }
   if (error) {
-    if (error instanceof Error && error.message === 'Article not found') {
-      res.status(404).json({ error: error.message });
-      return;
-    }
     res.status(500).json({ error: 'Failed to update article' });
     return;
   }
@@ -68,8 +115,19 @@ export const deleteArticle = async (
     return;
   }
 
+  const [zodParamError, validateParams] = await catchErrorTyped(
+    articleIdParamSchema.parseAsync(req.params),
+    [ZodError],
+  );
+
+  if (zodParamError) {
+    res.status(400).json({ errors: formatZodErrors(zodParamError) });
+    return;
+  }
+
   const [error] = await catchErrorTyped(
-    deleteArticleService(String(req.params.id), userId, userRoles),
+    deleteArticleService(validateParams.id, userId, userRoles),
+    [ForbiddenError, ArticleNotFoundError, DatabaseError],
   );
 
   if (error instanceof ForbiddenError) {
@@ -77,11 +135,12 @@ export const deleteArticle = async (
     return;
   }
 
+  if (error instanceof ArticleNotFoundError) {
+    res.status(404).json({ error: error.message });
+    return;
+  }
+
   if (error) {
-    if (error instanceof Error && error.message === 'Article not found') {
-      res.status(404).json({ error: error.message });
-      return;
-    }
     res.status(500).json({ error: 'Failed to delete article' });
     return;
   }
@@ -93,18 +152,28 @@ export const getArticle = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
-  const slug = req.params.slug;
+  const [zodParamError, validateParams] = await catchErrorTyped(
+    articleSlugParamSchema.parseAsync(req.params),
+    [ZodError],
+  );
+
+  if (zodParamError) {
+    res.status(400).json({ errors: formatZodErrors(zodParamError) });
+    return;
+  }
 
   const [error, article] = await catchErrorTyped(
-    getArticleBySlug(String(slug)),
+    getArticleBySlug(validateParams.slug),
+    [ArticleNotFoundError, DatabaseError],
   );
-  if (error) {
-    if (error instanceof DatabaseError) {
-      res.status(500).json({ error: 'Database error' });
-      return;
-    }
 
-    res.status(404).json({ error: 'Article not found' });
+  if (error instanceof ArticleNotFoundError) {
+    res.status(404).json({ error: error.message });
+    return;
+  }
+
+  if (error) {
+    res.status(500).json({ error: 'Database error' });
     return;
   }
 

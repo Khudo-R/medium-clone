@@ -6,7 +6,6 @@ import {
   getArticle,
 } from './article.controller';
 import { authMiddleware } from '@middleware/auth.middleware';
-import { validateResource } from '@middleware/validate.middleware';
 import {
   createArticleSchema,
   updateArticleSchema,
@@ -110,18 +109,8 @@ registry.registerPath({
 });
 
 router.get('/:slug', getArticle);
-router.post(
-  '/',
-  authMiddleware,
-  validateResource(createArticleSchema),
-  createArticle,
-);
-router.put(
-  '/:id',
-  authMiddleware,
-  validateResource(updateArticleSchema),
-  update,
-);
+router.post('/', authMiddleware, createArticle);
+router.put('/:id', authMiddleware, update);
 router.delete('/:id', authMiddleware, deleteArticle);
 
 export default router;

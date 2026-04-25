@@ -6,9 +6,10 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env';
+import { errorHandler } from '@middleware/error.middleware';
 import userRoutes from '@modules/user/user.routes';
 import articleRoutes from '@modules/article/article.routes';
-import { errorHandler } from '@middleware/error.middleware';
+import commentRoutes from '@modules/comment/comment.routes';
 
 dotenv.config();
 
@@ -38,6 +39,7 @@ app.get('/api/health-check', (_, res) => {
 
 app.use('/api/users', userRoutes);
 app.use('/api/articles', articleRoutes);
+app.use('/api/comments', commentRoutes);
 
 app.use((_, res) => {
   res.status(404).json({ error: 'Route not found' });

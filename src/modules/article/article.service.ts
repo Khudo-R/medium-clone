@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import { prisma } from '@config/db';
 import { CreateArticleInput, UpdateArticleInput } from './article.schema';
 import { catchErrorTyped } from '@utils/save-promise';
-import { ForbiddenError } from './article.error';
+import { ForbiddenError, ArticleNotFoundError } from './article.errors';
 import { DatabaseError } from '@utils/database.error';
 import { UserRole } from '@modules/user/user.schema';
 import { logger } from '@utils/logger';
@@ -84,7 +84,7 @@ export const getArticleBySlug = async (slug: string) => {
     throw new DatabaseError();
   }
   if (!article) {
-    throw new Error('Article not found');
+    throw new ArticleNotFoundError('Article not found');
   }
 
   return formatArticle(article);
@@ -107,7 +107,7 @@ export const updateArticle = async (
     throw new DatabaseError();
   }
   if (!article) {
-    throw new Error('Article not found');
+    throw new ArticleNotFoundError('Article not found');
   }
 
   const isAuthor = article.authorId === userId;
@@ -165,7 +165,7 @@ export const deleteArticle = async (
   }
 
   if (!article) {
-    throw new Error('Article not found');
+    throw new ArticleNotFoundError('Article not found');
   }
 
   const isAuthor = article.authorId === userId;

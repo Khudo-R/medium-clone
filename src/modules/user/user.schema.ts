@@ -7,7 +7,10 @@ export const registerSchema = z.object({
       .string()
       .min(3, 'Username must be at least 3 characters long')
       .openapi({ example: 'johndoe' }),
-    email: z.string().email('Invalid email address').openapi({ example: 'john@example.com' }),
+    email: z
+      .string()
+      .email('Invalid email address')
+      .openapi({ example: 'john@example.com' }),
     password: z
       .string()
       .min(6, 'Password must be at least 6 characters long')
@@ -19,7 +22,10 @@ export type RegisterInput = z.infer<typeof registerSchema>['body'];
 
 export const loginSchema = z.object({
   body: z.object({
-    email: z.string().email('Invalid email address').openapi({ example: 'john@example.com' }),
+    email: z
+      .string()
+      .email('Invalid email address')
+      .openapi({ example: 'john@example.com' }),
     password: z
       .string()
       .min(6, 'Password must be at least 6 characters long')
@@ -37,7 +43,11 @@ export const updateUserSchema = z.object({
         .min(3, 'Username must be at least 3 characters long')
         .optional()
         .openapi({ example: 'johndoe_updated' }),
-      email: z.string().email('Invalid email address').optional().openapi({ example: 'john_new@example.com' }),
+      email: z
+        .string()
+        .email('Invalid email address')
+        .optional()
+        .openapi({ example: 'john_new@example.com' }),
       password: z
         .string()
         .min(6, 'Password must be at least 6 characters long')
