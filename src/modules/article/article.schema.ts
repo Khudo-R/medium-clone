@@ -49,26 +49,28 @@ export const updateArticleSchema = z.object({
 export type UpdateArticleInput = z.infer<typeof updateArticleSchema>['body'];
 
 export const getArticlesQuerySchema = z.object({
-  limit: z.coerce
-    .number()
-    .int()
-    .positive()
-    .default(20)
-    .openapi({ example: 20, description: 'Number of articles to return' }),
-  offset: z.coerce
-    .number()
-    .int()
-    .min(0)
-    .default(0)
-    .openapi({ example: 0, description: 'Number of articles to skip' }),
-  tag: z
-    .string()
-    .optional()
-    .openapi({ example: 'Node.js', description: 'Filter by tag' }),
-  author: z
-    .string()
-    .optional()
-    .openapi({ example: 'johndoe', description: 'Filter by author username' }),
+  query: z.object({
+    limit: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(20)
+      .openapi({ example: 20, description: 'Number of articles to return' }),
+    offset: z.coerce
+      .number()
+      .int()
+      .min(0)
+      .default(0)
+      .openapi({ example: 0, description: 'Number of articles to skip' }),
+    tag: z
+      .string()
+      .optional()
+      .openapi({ example: 'Node.js', description: 'Filter by tag' }),
+    author: z.string().optional().openapi({
+      example: 'johndoe',
+      description: 'Filter by author username',
+    }),
+  }),
 });
 
 export const articleSlugParamSchema = z.object({
@@ -79,11 +81,12 @@ export const articleSlugParamSchema = z.object({
 });
 
 export const articleIdParamSchema = z.object({
-  id: z
-    .string()
-    .uuid()
-    .openapi({ example: '550e8400-e29b-41d4-a716-446655440000' }),
+  id: z.uuid().openapi({ example: '550e8400-e29b-41d4-a716-446655440000' }),
 });
+
+export type GetArticlesQuery = z.infer<typeof getArticlesQuerySchema>['query'];
+export type ArticleSlugParam = z.infer<typeof articleSlugParamSchema>;
+export type ArticleIdParam = z.infer<typeof articleIdParamSchema>;
 
 registry.register('CreateArticleInput', createArticleSchema.shape.body);
 registry.register('UpdateArticleInput', updateArticleSchema.shape.body);

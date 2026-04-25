@@ -165,4 +165,53 @@ describe('POST /api/articles - Article Creation', () => {
       expect(deletedArticle).toBeNull();
     });
   });
+
+  describe('GET /api/articles - List Articles', () => {
+    beforeAll(async () => {
+      await prisma.article.createMany({
+        data: [
+          {
+            title: 'List Article 1',
+            description: 'Desc 1',
+            body: 'Body content 1 with enough length.',
+            slug: 'list-article-1',
+            authorId: testUserId,
+          },
+          {
+            title: 'List Article 2',
+            description: 'Desc 2',
+            body: 'Body content 2 with enough length.',
+            slug: 'list-article-2',
+            authorId: testUserId,
+          },
+        ],
+      });
+    });
+
+    it('should return a list of articles with default pagination', async () => {
+      const res = await request(app).get('/api/articles');
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('articles');
+      expect(res.body).toHaveProperty('articlesCount');
+      expect(Array.isArray(res.body.articles)).toBe(true);
+      expect(res.body.articlesCount).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should respect limit and offset query parameters', async () => {
+      const res = await request(app).get('/api/articles?limit=1&offset=1');
+
+      expect(res.status).toBe(200);
+      expect(res.body.articles.length).toBe(1);
+    });
+
+    it('should filter articles by author', async () => {
+      const res = await request(app).get(`/api/articles?author=testuser`);
+
+      expect(res.status).toBe(200);
+      expect(
+        res.body.articles.every((a: any) => a.author.username === 'testuser'),
+      ).toBe(true);
+    });
+  });
 });

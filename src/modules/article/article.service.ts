@@ -7,8 +7,9 @@ import { ForbiddenError, ArticleNotFoundError } from './article.errors';
 import { DatabaseError } from '@utils/database.error';
 import { UserRole } from '@modules/user/user.schema';
 import { logger } from '@utils/logger';
+import { Prisma } from '@prisma/client';
 
-const formatArticle = (article: any) => {
+export const formatArticle = (article: any) => {
   const { tags, ...rest } = article;
   return {
     ...rest,
@@ -185,4 +186,42 @@ export const deleteArticle = async (
   }
 
   return deletedArticle;
+};
+
+export const getArticles = async (query: {
+  limit: number;
+  offset: number;
+  tag?: string;
+  author?: string;
+}) => {
+  const { limit, offset, tag, author } = query;
+
+  const where: Prisma.ArticleWhereInput = {};
+
+  if (tag) {
+    where.tags = { some: { name: tag } };
+  }
+
+  if (author) {
+    where.author = { username: author };
+  }
+
+  const [articles, articlesCount] = await Promise.all([
+    prisma.article.findMany({
+      where,
+      take: limit,
+      skip: offset,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        author: { select: { username: true, bio: true, image: true } },
+        tags: { select: { name: true } },
+      },
+    }),
+    prisma.article.count({ where }),
+  ]);
+
+  return {
+    articles,
+    articlesCount,
+  };
 };

@@ -56,6 +56,12 @@ A feature-rich RESTful API built with Node.js, Express, and TypeScript, inspired
    pnpm prisma:migrate
    ```
 
+5. **Seed the Database** (Optional):
+   Populate the database with initial test data:
+   ```bash
+   pnpm db:seed
+   ```
+
 ### Development Scripts
 
 - `pnpm dev`: Start the development server with hot-reload.

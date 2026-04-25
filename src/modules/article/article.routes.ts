@@ -4,6 +4,7 @@ import {
   update,
   deleteArticle,
   getArticle,
+  getAll,
 } from './article.controller';
 import { authMiddleware } from '@middleware/auth.middleware';
 import {
@@ -14,6 +15,7 @@ import {
   articleIdParamSchema,
 } from './article.schema';
 import { registry } from '@config/swagger';
+import { validateResource } from '@middleware/validate.middleware';
 
 const router = Router();
 
@@ -23,7 +25,7 @@ registry.registerPath({
   tags: ['Articles'],
   summary: 'Get all articles',
   request: {
-    query: getArticlesQuerySchema,
+    query: getArticlesQuerySchema.shape.query,
   },
   responses: {
     200: { description: 'Articles retrieved successfully' },
@@ -108,6 +110,7 @@ registry.registerPath({
   },
 });
 
+router.get('/', validateResource(getArticlesQuerySchema), getAll);
 router.get('/:slug', getArticle);
 router.post('/', authMiddleware, createArticle);
 router.put('/:id', authMiddleware, update);

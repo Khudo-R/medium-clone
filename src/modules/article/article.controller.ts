@@ -7,12 +7,15 @@ import {
   updateArticle as updateArticleService,
   deleteArticle as deleteArticleService,
   getArticleBySlug,
+  getArticles,
+  formatArticle,
 } from './article.service';
 import { DatabaseError } from '@utils/database.error';
 import { formatZodErrors } from '@utils/zod-error-formatter';
 import {
   createArticleSchema,
   updateArticleSchema,
+  getArticlesQuerySchema,
   articleSlugParamSchema,
   articleIdParamSchema,
 } from './article.schema';
@@ -178,4 +181,31 @@ export const getArticle = async (
   }
 
   res.status(200).json({ article });
+};
+
+export const getAll = async (req: Request, res: Response): Promise<void> => {
+  const [zodError, validateData] = await catchErrorTyped(
+    getArticlesQuerySchema.parseAsync(req),
+    [ZodError],
+  );
+
+  if (zodError) {
+    res.status(400).json({ errors: formatZodErrors(zodError) });
+    return;
+  }
+
+  const [error, data] = await catchErrorTyped(
+    getArticles(validateData.query),
+    [DatabaseError],
+  );
+
+  if (error) {
+    res.status(500).json({ error: 'Failed to fetch articles' });
+    return;
+  }
+
+  res.status(200).json({
+    articles: data.articles.map(formatArticle),
+    articlesCount: data.articlesCount,
+  });
 };
