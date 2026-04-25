@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import { verifyJwt } from '@utils/jwt';
 import { env } from '../config/env';
 import { UserRole } from '@modules/user/user.schema';
 
@@ -29,12 +29,12 @@ export const authMiddleware = (
 
   const token = authHeader?.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, env.JWT_SECRET) as {
+    const decoded = verifyJwt(token);
+
+    req.user = decoded as {
       userId: string;
       roles: UserRole[];
     };
-
-    req.user = decoded;
 
     next();
   } catch (error) {

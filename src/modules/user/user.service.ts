@@ -1,6 +1,6 @@
 import type { RegisterInput, LoginInput, UpdateUserInput } from './user.schema';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+import { signJwt } from '@utils/jwt';
 import { prisma } from '@config/db';
 import { env } from '@config/env';
 import { catchErrorTyped } from '@utils/save-promise';
@@ -93,13 +93,7 @@ export const loginUser = async (data: LoginInput) => {
     throw new InvalidCredentialsError();
   }
 
-  const token = jwt.sign(
-    { userId: user.id, roles: user.roles },
-    env.JWT_SECRET,
-    {
-      expiresIn: '7d',
-    },
-  );
+  const token = signJwt({ userId: user.id, roles: user.roles as any });
 
   return {
     ...user,
