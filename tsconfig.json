@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "CommonJS",
-    "rootDir": ".",
+    "rootDir": "./src",
     "outDir": "./dist",
     "baseUrl": ".",
     "ignoreDeprecations": "6.0",
@@ -18,5 +18,5 @@
       "@middleware/*": ["src/middleware/*"]
     }
   },
-  "include": ["src/**/*", "prisma/**/*"]
+  "include": ["src/**/*"]
 }

@@ -80,6 +80,51 @@ A feature-rich RESTful API built with Node.js, Express, and TypeScript, inspired
    pnpm test
    ```
 
+## 🐳 Docker Setup
+
+The project is fully containerized. To run it locally, you only need [Docker](https://www.docker.com/) and the cloned repository.
+
+### 1. Preparation
+Ensure you have a `.env` file in the project root (you can use `.env.example` as a template).
+
+### 2. Start Infrastructure
+This command will download PostgreSQL and Redis images, build the Node.js application, and start everything in the background:
+```bash
+docker compose up -d --build
+```
+*(The `--build` flag ensures Docker builds the latest version of your code).*
+
+### 3. Database Setup (Prisma)
+Since the database starts empty, you need to apply migrations inside the running `api` container:
+
+**Apply migrations (create tables):**
+```bash
+docker compose exec api pnpm run prisma:migrate
+```
+
+**Seed the database (optional):**
+```bash
+docker compose exec api pnpm run db:seed
+```
+
+### 4. Monitoring Logs
+To view your Express server logs in real-time:
+```bash
+docker compose logs -f api
+```
+
+### 5. Stopping Containers
+Stop the containers gracefully (data persists in Docker Volumes):
+```bash
+docker compose down
+```
+
+**Full Reset (Danger Zone):**
+To remove containers and wipe all data from the local database:
+```bash
+docker compose down -v
+```
+
 ## 📖 API Documentation
 
 Once the server is running, visit:
