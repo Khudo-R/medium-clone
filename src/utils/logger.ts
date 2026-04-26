@@ -1,10 +1,14 @@
 import pino from 'pino';
-import { env } from '../config/env';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const nodeEnv = process.env.NODE_ENV || 'development';
 
 export const logger = pino({
-  level: env.NODE_ENV === 'development' ? 'debug' : 'info',
+  level: nodeEnv === 'development' ? 'debug' : 'info',
   transport:
-    env.NODE_ENV === 'development'
+    nodeEnv === 'development'
       ? {
           target: 'pino-pretty',
           options: {

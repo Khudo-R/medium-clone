@@ -3,15 +3,12 @@ import type { Application } from 'express';
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
-import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env';
 import { errorHandler } from '@middleware/error.middleware';
 import userRoutes from '@modules/user/user.routes';
 import articleRoutes from '@modules/article/article.routes';
 import commentRoutes from '@modules/comment/comment.routes';
-
-dotenv.config();
 
 const app: Application = express();
 

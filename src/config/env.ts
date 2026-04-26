@@ -1,7 +1,5 @@
 import { z } from 'zod';
-import dotenv from 'dotenv';
-
-dotenv.config();
+import { logger } from '../utils/logger';
 
 const envSchema = z.object({
   PORT: z.string().default('3000'),
@@ -17,9 +15,9 @@ const envSchema = z.object({
 const parsedEnv = envSchema.safeParse(process.env);
 
 if (!parsedEnv.success) {
-  console.error(
-    'Environment variable validation failed:',
-    parsedEnv.error.format(),
+  logger.error(
+    { errors: parsedEnv.error.format() },
+    'Environment variable validation failed',
   );
   process.exit(1);
 }

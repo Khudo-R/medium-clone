@@ -19,6 +19,8 @@ import {
   articleSlugParamSchema,
   articleIdParamSchema,
 } from './article.schema';
+import { redisClient } from '@config/redis';
+import { logger } from '@utils/logger';
 
 export const createArticle = async (
   req: Request,
@@ -184,6 +186,9 @@ export const getArticle = async (
 };
 
 export const getAll = async (req: Request, res: Response): Promise<void> => {
+  const query = req.query;
+  const cacheKey = `articles:${JSON.stringify(query)}`;
+
   const [zodError, validateData] = await catchErrorTyped(
     getArticlesQuerySchema.parseAsync(req),
     [ZodError],
@@ -194,18 +199,37 @@ export const getAll = async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  const [error, data] = await catchErrorTyped(
-    getArticles(validateData.query),
-    [DatabaseError],
-  );
+  try {
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      res.status(200).json(JSON.parse(cachedData));
+      return;
+    }
+  } catch (redisErr) {
+    logger.error(redisErr, 'Redis GET Error:');
+  }
+
+  const [error, data] = await catchErrorTyped(getArticles(validateData.query), [
+    DatabaseError,
+  ]);
 
   if (error) {
     res.status(500).json({ error: 'Failed to fetch articles' });
     return;
   }
 
-  res.status(200).json({
+  const responseData = {
     articles: data.articles.map(formatArticle),
     articlesCount: data.articlesCount,
-  });
+  };
+
+  try {
+    await redisClient.set(cacheKey, JSON.stringify(responseData), {
+      EX: 60,
+    });
+  } catch (redisErr) {
+    logger.error(redisErr, 'Redis SET Error:');
+  }
+
+  res.status(200).json(responseData);
 };

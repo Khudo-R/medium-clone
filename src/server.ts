@@ -3,13 +3,25 @@ import { env } from './config/env';
 import { logger } from './utils/logger';
 import { prisma } from './config/db';
 import { catchErrorTyped } from '@utils/save-promise';
+import { connectRedis, redisClient } from './config/redis';
 
-const server = app.listen(env.PORT, () => {
-  logger.info(`🚀 Server is running on http://localhost:${env.PORT}`);
-});
+let server: ReturnType<typeof app.listen>;
+
+const startServer = async () => {
+  await connectRedis();
+  server = app.listen(env.PORT, () => {
+    logger.info(`🚀 Server is running on http://localhost:${env.PORT}`);
+  });
+};
+
+startServer();
 
 const gracefulShutdown = async (signal: string) => {
   logger.info(`\n Received ${signal}. Shutting down gracefully...`);
+
+  if (!server) {
+    process.exit(0);
+  }
 
   server.close(async () => {
     logger.info('HTTP server closed. Closing database connection...');
@@ -19,6 +31,13 @@ const gracefulShutdown = async (signal: string) => {
       logger.error(dbCloseError, 'Error closing database connection:');
       process.exit(1);
     }
+
+    const [redisCloseError] = await catchErrorTyped(redisClient.quit());
+    if (redisCloseError) {
+      logger.error(redisCloseError, 'Error closing Redis connection:');
+      process.exit(1);
+    }
+
     logger.info('Database connection closed. Shutdown complete.');
     process.exit(0);
   });

@@ -1,9 +1,10 @@
+import { logger } from '../src/utils/logger';
 import { prisma } from '../src/config/db';
 import { faker } from '@faker-js/faker';
 import slugify from 'slugify';
 
 async function main() {
-  console.log('(Seeding)...');
+  logger.info('(Seeding)...');
 
   await prisma.comment.deleteMany();
   await prisma.article.deleteMany();
@@ -63,12 +64,12 @@ async function main() {
     });
   }
 
-  console.log('Seeding completed!');
+  logger.info('Seeding completed!');
 }
 
 main()
   .catch((e) => {
-    console.error('Error during the seeding:', e);
+    logger.error('Error during the seeding:', e);
     process.exit(1);
   })
   .finally(async () => {

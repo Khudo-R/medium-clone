@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ZodError } from 'zod';
+import { json, ZodError } from 'zod';
 import * as CommentService from './comment.service';
 import { catchErrorTyped } from '@utils/save-promise';
 import { ForbiddenError, CommentNotFoundError } from './comment.errors';
@@ -11,6 +11,8 @@ import {
   getCommentsQuerySchema,
   commentIdParamSchema,
 } from './comment.schema';
+import { redisClient } from '@config/redis';
+import { logger } from '@utils/logger';
 
 export const create = async (req: Request, res: Response): Promise<void> => {
   const [zodError, validateData] = await catchErrorTyped(
@@ -45,6 +47,9 @@ export const create = async (req: Request, res: Response): Promise<void> => {
 };
 
 export const getMany = async (req: Request, res: Response): Promise<void> => {
+  const query = req.query;
+  const cacheKey = `comments:${JSON.stringify(query)}`;
+
   const [zodError, validateData] = await catchErrorTyped(
     getCommentsQuerySchema.parseAsync(req),
     [ZodError],
@@ -53,6 +58,17 @@ export const getMany = async (req: Request, res: Response): Promise<void> => {
   if (zodError) {
     res.status(400).json({ errors: formatZodErrors(zodError) });
     return;
+  }
+
+  try {
+    const cachedData = await redisClient.get(cacheKey);
+    logger.info(`Cache key: ${cacheKey}, Cache hit: ${cachedData}`);
+    if (cachedData) {
+      res.status(200).json(JSON.parse(cachedData));
+      return;
+    }
+  } catch (redisErr) {
+    logger.error(redisErr, 'Redis GET Error:');
   }
 
   const [error, comments] = await catchErrorTyped(
@@ -64,6 +80,15 @@ export const getMany = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ error: (error as Error).message });
     return;
   }
+
+  try {
+    await redisClient.set(cacheKey, JSON.stringify({ comments }), {
+      EX: 60,
+    });
+  } catch (redisErr) {
+    logger.error(redisErr, 'Redis SET Error:');
+  }
+
   res.status(200).json({ comments });
 };
 
