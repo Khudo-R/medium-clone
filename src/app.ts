@@ -9,6 +9,7 @@ import { errorHandler } from '@middleware/error.middleware';
 import userRoutes from '@modules/user/user.routes';
 import articleRoutes from '@modules/article/article.routes';
 import commentRoutes from '@modules/comment/comment.routes';
+import healthRoutes from '@modules/health/health.routes';
 
 const app: Application = express();
 
@@ -30,10 +31,7 @@ app.get('/api-docs.json', (_, res) => {
   res.json(generateOpenApiDocument());
 });
 
-app.get('/api/health-check', (_, res) => {
-  res.status(200).json({ message: 'Server is healthy', status: 'success' });
-});
-
+app.use('/api/health-check', healthRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/articles', articleRoutes);
 app.use('/api/comments', commentRoutes);

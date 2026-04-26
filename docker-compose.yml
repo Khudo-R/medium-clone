@@ -23,7 +23,7 @@ services:
     build: .
     restart: always
     ports:
-      - '3000:3000'
+      - '3000:3030'
     env_file:
       - .env
     environment:
@@ -32,6 +32,10 @@ services:
     depends_on:
       - db
       - redis
+    command: pnpm run dev
+    volumes:
+      - .:/app
+      - /app/node_modules
 
 volumes:
   pgdata:
