@@ -6,11 +6,12 @@ import { catchErrorTyped } from '@utils/save-promise';
 import { connectRedis, redisClient } from './config/redis';
 
 let server: ReturnType<typeof app.listen>;
+const PORT = process.env.PORT || 3000;
 
 const startServer = async () => {
   await connectRedis();
-  server = app.listen(env.PORT, () => {
-    logger.info(`🚀 Server is running on http://localhost:${env.PORT}`);
+  server = app.listen(PORT as number, '0.0.0.0', () => {
+    logger.info(`🚀 Server is running on http://localhost:${PORT}`);
   });
 };
 
